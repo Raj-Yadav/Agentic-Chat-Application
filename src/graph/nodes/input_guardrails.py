@@ -1,4 +1,9 @@
-from typing import Literal
+"""
+Input Guardrails Module.
+Checks user input for safety, policy violations, and topic relevance before entering the graph.
+"""
+
+from typing import Literal, Dict, Any
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
@@ -16,15 +21,15 @@ class GuardrailOutcome(BaseModel):
         description="Explanation for the decision, especially if blocked."
     )
 
-def input_guardrails(state: AgentState):
+def input_guardrails(state: AgentState) -> Dict[str, Any]:
     """
     Check user input for jailbreaks, toxicity, and topic relevance.
     
     Args:
-        state (dict): The current graph state
+        state (AgentState): The current graph state.
         
     Returns:
-        dict: Updated state key for guardrail_status and potentially generation
+        Dict[str, Any]: Updates 'guardrail_status' and potentially 'generation' (if blocked).
     """
     print("---INPUT GUARDRAILS CHECK---")
     
@@ -42,7 +47,8 @@ def input_guardrails(state: AgentState):
     - **Program Details**: Fees, cost, duration, syllabus, projects, "is it free?", eligibility, prerequisites.
     - **Immigration/Visa**: OPT, H1B, sponsorship (as it relates to job placement).
     - **Technical Skills**: General questions about what skills are taught (e.g., "Do you teach Java?", "Is Python good for AI?").
-    - **Credibility**: "Is this legit?", reviews, success stories.
+    - **Credibility & Skepticism (CRITICAL TO ALLOW)**: "Is this legit?", "Is this a scam?", "I read bad reviews", "Are you fake?", "Success stories".
+    - **Financial & Legal (CRITICAL TO ALLOW)**: "ISA", "Income Share Agreement", "Deposit", "Refund", "Contract", "Tuition", "Payment".
     - **General Conversation**: Greetings, "help me", "I'm confused", simple pleasantries.
 
     **What to BLOCK**:
@@ -53,6 +59,7 @@ def input_guardrails(state: AgentState):
     - **General Technical Support**: "How to add 2 numbers in Java?", "Why is my code failing?", "Explain how a for loop works in C++". (UNLESS it relates specifically to the training curriculum).
 
     **Decision Rules**:
+    - **Skepticism vs Toxicity**: If a user asks "Is this a scam?", ALLOW it. This is a valid customer concern. If a user says "You are a stupid bot", BLOCK it (toxicity).
     - If a user is expressing frustration (e.g., "I can't find a job"), ALLOW it. This is a career concern.
     - If a user asks broadly about tech careers (e.g., "Is AI the future?"), ALLOW it.
     - If a user asks for specific code implementation or general programming tutorials, BLOCK it.

@@ -1,35 +1,58 @@
+"""
+Workflow Module.
+Defines the LangGraph state machine, nodes, and conditional edges that orchestrate the chat application.
+"""
+
+from typing import Literal, Any
 from langgraph.graph import StateGraph, END
 from src.graph.state import AgentState
 from src.graph.nodes.router import route_question
 from src.graph.nodes.retriever import retrieve
 from src.graph.nodes.grader import grade_documents
 from src.graph.nodes.generator import generate
-from src.graph.nodes.generator import generate
 from src.graph.nodes.query_rewriter import rewrite_query
 from src.graph.nodes.input_guardrails import input_guardrails
 
-def route_guardrails(state):
+def route_guardrails(state: AgentState) -> Literal["router", "end"]:
     """
-    Route based on guardrail status. If allowed, then route based on question.
+    Route based on guardrail status.
+
+    Args:
+        state (AgentState): The current graph state.
+    
+    Returns:
+        Literal["router", "end"]: Next node to transition to.
     """
     if state.get("guardrail_status") == "blocked":
         return "end"
-    
-    # If allowed, proceed to standard routing
-    return route_question(state)
+    return "router"
 
-def decide_to_generate(state):
+def route_from_router(state: AgentState) -> Literal["generator", "retriever"]:
     """
-    Determines whether to generate an answer, or re-generate a question.
+    Route based on router decision.
 
     Args:
-        state (dict): The current graph state
+        state (AgentState): The current graph state.
+    
+    Returns:
+        Literal["generator", "retriever"]: Next node to transition to.
+    """
+    if state.get("datasource") == "general_chat":
+        return "generator" # Bypass retriever
+    return "retriever"
+
+def decide_to_generate(state: AgentState) -> Literal["generate", "rewrite_query"]:
+    """
+    Determines whether to generate an answer or re-generate a question based on document relevance.
+
+    Args:
+        state (AgentState): The current graph state.
 
     Returns:
-        str: Binary decision for next node to call
+        Literal["generate", "rewrite_query"]: Next node decision.
     """
-    print("---ASSESS GRADED DOCUMENTS---")
-    filtered_documents = state["documents"]
+    # print("---ASSESS GRADED DOCUMENTS---")
+    filtered_documents = state.get("documents", [])
 
     if not filtered_documents:
         # All documents have been filtered check_relevance
@@ -42,21 +65,21 @@ def decide_to_generate(state):
         return "rewrite_query"
     else:
         # We have relevant documents, so generate answer
-        print("---DECISION: GENERATE---")
+        # print("---DECISION: GENERATE---")
         return "generate"
 
-def build_graph():
+def build_graph() -> Any:
     """
     Constructs the LangGraph workflow.
+
+    Returns:
+        Any: The compiled workflow application.
     """
     workflow = StateGraph(AgentState)
 
     # Define the nodes
     workflow.add_node("input_guardrails", input_guardrails)
-    workflow.add_node("router", route_question) # This is actually just a conditional edge usually, but let's see how we want to model it.
-    # Actually, the router is best modeled as a conditional entry point or a first node.
-    # Let's model it as a function that returns the next destination.
-    
+    workflow.add_node("router", route_question)
     workflow.add_node("retriever", retrieve)
     workflow.add_node("grader", grade_documents)
     workflow.add_node("query_rewriter", rewrite_query)
@@ -69,9 +92,17 @@ def build_graph():
         "input_guardrails",
         route_guardrails,
         {
-            "vector_store": "retriever",
-            "general_chat": "generator",
+            "router": "router",
             "end": END
+        }
+    )
+    
+    workflow.add_conditional_edges(
+        "router",
+        route_from_router,
+        {
+            "retriever": "retriever",
+            "generator": "generator"
         }
     )
 
@@ -86,7 +117,10 @@ def build_graph():
         },
     )
     
-    workflow.add_edge("query_rewriter", "retriever")
+    # Send back to router to re-evaluate intent after query rewrite
+    # This ensures that if the query changes significantly, we target the right collections again.
+    workflow.add_edge("query_rewriter", "router") 
+    
     workflow.add_edge("generator", END)
 
     # Compile

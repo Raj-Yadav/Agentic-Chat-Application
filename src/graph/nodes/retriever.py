@@ -1,29 +1,103 @@
+"""
+Retriever Module.
+Handles document retrieval from targeted ChromaDB collections and re-ranking of results.
+"""
+
+from typing import Dict, Any, List, Optional
+import numpy as np
 from src.graph.state import AgentState
-from src.ingestion.vector_db import create_vector_db
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
+from langchain_core.documents import Document
 from src.config import CHROMA_DB_DIR, OPENAI_API_KEY
+from sentence_transformers import CrossEncoder
 
-def retrieve(state: AgentState):
+# Global reranker initialization (lazy load)
+_RERANKER: Optional[CrossEncoder] = None
+
+def get_reranker() -> CrossEncoder:
     """
-    Retrieve documents
+    Lazy loads the CrossEncoder model to avoid overhead if not used.
+    """
+    global _RERANKER
+    if _RERANKER is None:
+        print("Loading CrossEncoder model...")
+        _RERANKER = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+    return _RERANKER
+
+def retrieve(state: AgentState) -> Dict[str, Any]:
+    """
+    Retrieve documents from targeted collections and rerank them using CrossEncoder.
 
     Args:
-        state (dict): The current graph state
-
+        state (AgentState): The current graph state.
+    
     Returns:
-        state (dict): New key added to state, documents, that contains retrieved documents
+        Dict[str, Any]: Updated state with 'documents'.
     """
-    print("---RETRIEVE---")
+    print("---RETRIEVE & RERANK---")
     question = state["question"]
+    target_collections = state.get("target_collections", [])
+    
+    # Default to all if empty or error
+    if not target_collections:
+        print("WARNING: No target collections found. Defaulting to 'program'.")
+        target_collections = ["program"]
 
-    # Initialize Vector Store
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=OPENAI_API_KEY)
-    vector_store = Chroma(
-        persist_directory=CHROMA_DB_DIR,
-        embedding_function=embeddings
+    print(f"Target Collections: {target_collections}")
+    
+    # 1. Retrieve (High Recall)
+    pre_rerank_docs = []
+    for collection_name in target_collections:
+        try:
+            vectorstore = Chroma(
+                collection_name=collection_name,
+                embedding_function=OpenAIEmbeddings(model="text-embedding-3-small", api_key=OPENAI_API_KEY),
+                persist_directory=CHROMA_DB_DIR,
+            )
+            # Fetch more docs initially for reranking
+            results = vectorstore.similarity_search(question, k=25)
+            # Add metadata to track source
+            for doc in results:
+                doc.metadata["_source_collection"] = collection_name
+                pre_rerank_docs.append(doc)
+            print(f"  - Retrieved {len(results)} from '{collection_name}'")
+        except Exception as e:
+            print(f"  - Error retrieving from '{collection_name}': {e}")
+            
+    if not pre_rerank_docs:
+        return {"documents": [], "question": question}
+    
+    # Deduplicate (if any)
+    unique_docs = {doc.page_content: doc for doc in pre_rerank_docs}.values()
+    pre_rerank_docs = list(unique_docs)
+    
+    # DEBUG LOG for Diagnosis
+    # print("\n[DEBUG] Top 3 Pre-Rerank Docs:")
+    # for i, d in enumerate(pre_rerank_docs[:3]):
+    #     print(f"  {i+1}. [{d.metadata.get('_source_collection')}] {d.page_content[:100]}...")
+
+    # 2. Rerank
+    # CrossEncoder needs pairs of (query, doc_text)
+    pairs = [(question, doc.page_content) for doc in pre_rerank_docs]
+    
+    # Lazy load model if not already (to avoid startup lag)
+    reranker_model = get_reranker()
+        
+    scores = reranker_model.predict(pairs)
+    
+    # Attach scores and sort
+    scored_docs = sorted(
+        zip(pre_rerank_docs, scores), 
+        key=lambda x: x[1], 
+        reverse=True
     )
     
-    # Retrieval
-    documents = vector_store.similarity_search(question, k=3)
-    return {"documents": documents, "question": question}
+    # Select Top K (e.g., 3)
+    top_k_docs = [doc for doc, score in scored_docs[:3]]
+    
+    # print("\n[DEBUG] Top 3 Reranked Docs:")
+    # for i, (doc, score) in enumerate(scored_docs[:3]):
+    #     print(f"  {i+1}. Score: {score:.4f} | Source: {doc.metadata.get('_source_collection')} | Content: {doc.page_content[:150]}...")
+
+    return {"documents": top_k_docs, "question": question}

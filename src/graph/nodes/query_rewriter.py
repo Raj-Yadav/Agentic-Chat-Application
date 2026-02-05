@@ -1,18 +1,24 @@
+"""
+Query Rewriter Module.
+Transforms semantic intent into an optimized search query.
+"""
+
+from typing import Dict, Any
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from src.graph.state import AgentState
 from src.config import OPENAI_API_KEY
 
-def rewrite_query(state: AgentState):
+def rewrite_query(state: AgentState) -> Dict[str, Any]:
     """
     Transform the query to produce a better question.
 
     Args:
-        state (dict): The current graph state
+        state (AgentState): The current graph state.
 
     Returns:
-        state (dict): Updates question key with a re-phrased question
+        Dict[str, Any]: Updates 'question' key with a re-phrased question and increments 'loop_step'.
     """
     print("---TRANSFORM QUERY---")
     question = state["question"]

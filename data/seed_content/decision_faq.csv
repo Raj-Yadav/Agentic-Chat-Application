@@ -1,0 +1,18 @@
+question,answer,category,risk_level,intent,answer_type
+"Is the ISA legally binding?","Yes. The ISA is a legally enforceable contract that obligates you to share a percentage of your income for a set period once you secure a job meeting the salary threshold.",financing,high,decision,factual
+"Do I have to pay any tuition upfront?","Candidates need to pay a refundable deposit (approximately $10k-$15k depending on the track) to ensure commitment. The remaining tuition is paid via ISA only after you get a job.",financing,medium,decision,policy
+"What is the minimum salary threshold?","You only start paying the ISA if your gross annual income is $81,000 or higher.",financing,high,decision,policy
+"What happens if I lose my job?","If you lose your job and your income drops below the threshold, your ISA payments pause. You do not make payments while unemployed.",financing,high,decision,policy
+"Is there a cap on the total amount I will pay back?","Yes, there is a maximum payment cap. Once you reach this cap, your obligation ends regardless of how much time is left on your term.",financing,high,decision,policy
+"Can I just pay the tuition in cash instead of signing an ISA?","Yes, an upfront payment option is available which may be lower than the total potential ISA cap. Please contact admissions for current rates.",financing,medium,decision,policy
+"Do you charge interest on the ISA?","ISA payments are based on a percentage of your income, not an interest rate. However, the total amount paid may constitute more than the initial value of the training.",financing,medium,decision,factual
+"Can I pause my ISA payments if I go back to school?","ISA payments generally pause if you return to school full-time and have no income, but you must provide proof of enrollment.",financing,medium,decision,policy
+"How long does the Job Placement Program take to complete?","The technical training phase typically lasts 3-4 months, followed by the job placement phase which varies by candidate but often takes 3-6 months.",placement,medium,decision,factual
+"What is your placement rate for graduates?","We maintain a placement rate of approximately 91.5% for candidates who complete the entire program and follow our placement protocols.",placement,high,decision,marketing
+"Do you guarantee a job after the training?","While we have a very high success rate, no educational institution can legally guarantee a job. We guarantee we will work with you until you are placed, provided you remain active and compliant.",placement,high,decision,policy
+"What is the average starting salary for JOPP graduates?","The average starting salary for our graduates ranges between $75k and $155k, depending on location and role.",placement,medium,decision,marketing
+"Do you help with H1B or OPT visa sponsorship?","We work with candidates on OPT and can help navigate H1B sponsorship opportunities with our client network.",placement,high,decision,factual
+"Is the training remote or do I have to move to Fremont, CA?","The training is currently 100% remote and can be taken from anywhere in the US.",logistics,low,decision,factual
+"Do you have a physical office?","Yes, our headquarters are located at 39141 Civic Center Dr, Fremont, CA.",credibility,low,decision,factual
+"How does SynergisticIT differ from a regular coding bootcamp?","We are not just a bootcamp; we are a specialized staffing and placement firm that invests in your upskilling to ensure you are marketable for premium roles.",credibility,medium,decision,marketing
+"Can I join JOPP if I don't have a Computer Science degree?","Yes, we accept candidates from STEM backgrounds. A CS degree is preferred but not strictly mandatory if you have strong aptitude.",curriculum,medium,decision,policy
