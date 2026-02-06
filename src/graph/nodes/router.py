@@ -73,7 +73,7 @@ def route_question(state: AgentState) -> Dict[str, Any]:
     elif intent == "curriculum":
         target_collections = ["program"]
     elif intent == "logistics":
-        target_collections = ["decision_faq", "program"]
+        target_collections = ["decision_faq", "program", "trust"]
     elif intent == "credibility":
         target_collections = ["trust", "decision_faq"]
     elif intent == "general":

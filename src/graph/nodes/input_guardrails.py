@@ -46,6 +46,8 @@ def input_guardrails(state: AgentState) -> Dict[str, Any]:
     - **Career Queries**: Jobs, salary, interviews, resumes, hiring trends, "will I get a job?", "is coding hard?".
     - **Program Details**: Fees, cost, duration, syllabus, projects, "is it free?", eligibility, prerequisites.
     - **Immigration/Visa**: OPT, H1B, sponsorship (as it relates to job placement).
+    - **Employment & Logistics**: "Will you market me?", "direct hire vs contract", "Who is my employer?", "placement process".
+    - **Location & Contact**: "Where is your office?", "Location", "Phone number", "Email", "Contact us".
     - **Technical Skills**: General questions about what skills are taught (e.g., "Do you teach Java?", "Is Python good for AI?").
     - **Credibility & Skepticism (CRITICAL TO ALLOW)**: "Is this legit?", "Is this a scam?", "I read bad reviews", "Are you fake?", "Success stories".
     - **Financial & Legal (CRITICAL TO ALLOW)**: "ISA", "Income Share Agreement", "Deposit", "Refund", "Contract", "Tuition", "Payment".
