@@ -68,14 +68,19 @@ def route_question(state: AgentState) -> Dict[str, Any]:
     
     if intent == "financing":
         target_collections = ["decision_faq", "policy"]
+        source.datasource = "vector_store" # Enforce consistency
     elif intent == "placement":
         target_collections = ["decision_faq", "policy", "trust"]
+        source.datasource = "vector_store"
     elif intent == "curriculum":
         target_collections = ["program"]
+        source.datasource = "vector_store"
     elif intent == "logistics":
         target_collections = ["decision_faq", "program", "trust"]
+        source.datasource = "vector_store"
     elif intent == "credibility":
         target_collections = ["trust", "decision_faq"]
+        source.datasource = "vector_store"
     elif intent == "general":
         if source.datasource == "vector_store":
              target_collections = ["decision_faq", "program"] # fallback

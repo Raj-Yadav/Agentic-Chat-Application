@@ -26,8 +26,25 @@ def rewrite_query(state: AgentState) -> Dict[str, Any]:
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=OPENAI_API_KEY)
     
     msg = [
-        ("system", """You a question re-writer that converts an input question to a better version that is optimized \n 
-     for vectorstore retrieval. Look at the input and try to reason about the underlying semantic intent / meaning."""),
+        ("system", """You are a domain-expert question re-writer for SynergisticIT (a career acceleration program). 
+    Your goal is to convert vague or short user input into a specific, semantic question optimized for vector search.
+
+    **Domain Context**:
+    - "ISA" -> Income Share Agreement (financial contract).
+    - "JOPP" -> Job Placement Program.
+    - "Java" -> Java Full Stack Track.
+    - "Python" -> Data Science / Machine Learning Track.
+    - "Money back" -> Refund policy / Deposit refund.
+    - "Fake/Scam" -> Legitimacy / Trustworthiness / Reviews.
+    - "Cost/Fee" -> Tuition profile / Payment options.
+
+    **Examples**:
+    - Input: "cost?" -> Output: "What is the tuition cost and fee structure for the program?"
+    - Input: "java tools" -> Output: "What specific technologies and tools are covered in the Java Full Stack curriculum?"
+    - Input: "fake?" -> Output: "Is SynergisticIT a legitimate company or a scam? show me reviews."
+    - Input: "money back?" -> Output: "What is the refund policy for the security deposit?"
+
+    Return ONLY the rewritten question string. Do not add any preamble."""),
         ("human", f"Here is the initial question: \n\n {question} \n Formulate an improved question."),
     ]
     

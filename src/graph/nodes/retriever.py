@@ -4,7 +4,6 @@ Handles document retrieval from targeted ChromaDB collections and re-ranking of 
 """
 
 from typing import Dict, Any, List, Optional
-import numpy as np
 from src.graph.state import AgentState
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
@@ -69,13 +68,9 @@ def retrieve(state: AgentState) -> Dict[str, Any]:
         return {"documents": [], "question": question}
     
     # Deduplicate (if any)
+    # Deduplicate (if any)
     unique_docs = {doc.page_content: doc for doc in pre_rerank_docs}.values()
     pre_rerank_docs = list(unique_docs)
-    
-    # DEBUG LOG for Diagnosis
-    # print("\n[DEBUG] Top 3 Pre-Rerank Docs:")
-    # for i, d in enumerate(pre_rerank_docs[:3]):
-    #     print(f"  {i+1}. [{d.metadata.get('_source_collection')}] {d.page_content[:100]}...")
 
     # 2. Rerank
     # CrossEncoder needs pairs of (query, doc_text)
@@ -94,10 +89,7 @@ def retrieve(state: AgentState) -> Dict[str, Any]:
     )
     
     # Select Top K (e.g., 3)
+    # Select Top K (e.g., 3)
     top_k_docs = [doc for doc, score in scored_docs[:3]]
-    
-    # print("\n[DEBUG] Top 3 Reranked Docs:")
-    # for i, (doc, score) in enumerate(scored_docs[:3]):
-    #     print(f"  {i+1}. Score: {score:.4f} | Source: {doc.metadata.get('_source_collection')} | Content: {doc.page_content[:150]}...")
 
     return {"documents": top_k_docs, "question": question}

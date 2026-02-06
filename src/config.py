@@ -20,6 +20,9 @@ OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 if not OPENAI_API_KEY:
     print("WARNING: OPENAI_API_KEY is not set in environment variables.")
 
+# --- Redis Configuration ---
+REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
 # --- Scraper Configuration ---
 # List of authoritative URLs to scrape for knowledge base
 AUTHORITATIVE_URLS: List[str] = [

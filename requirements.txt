@@ -10,3 +10,4 @@ langgraph
 fastapi
 uvicorn
 sentence-transformers
+redis

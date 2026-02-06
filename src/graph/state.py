@@ -23,4 +23,6 @@ class AgentState(TypedDict):
     loop_step: int
     intent: str
     target_collections: List[str]
+    target_collections: List[str]
     datasource: str
+    cache_hit: bool

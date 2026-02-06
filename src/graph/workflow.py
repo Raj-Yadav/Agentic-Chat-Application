@@ -3,7 +3,7 @@ Workflow Module.
 Defines the LangGraph state machine, nodes, and conditional edges that orchestrate the chat application.
 """
 
-from typing import Literal, Any
+from typing import Literal, Any, Dict
 from langgraph.graph import StateGraph, END
 from src.graph.state import AgentState
 from src.graph.nodes.router import route_question
@@ -11,7 +11,32 @@ from src.graph.nodes.retriever import retrieve
 from src.graph.nodes.grader import grade_documents
 from src.graph.nodes.generator import generate
 from src.graph.nodes.query_rewriter import rewrite_query
+from src.graph.nodes.query_rewriter import rewrite_query
 from src.graph.nodes.input_guardrails import input_guardrails
+from src.utils.cache import cache
+
+def check_cache(state: AgentState) -> Dict[str, Any]:
+    """
+    Check Redis cache for existing answer.
+    """
+    print("---CHECK CACHE---")
+    question = state["question"]
+    cached_response = cache.get(question)
+    
+    if cached_response:
+        print("---CACHE HIT---")
+        return {"generation": cached_response, "cache_hit": True}
+    
+    print("---CACHE MISS---")
+    return {"cache_hit": False}
+
+def route_cache(state: AgentState) -> Literal["end", "router"]:
+    """
+    Route based on cache hit.
+    """
+    if state.get("cache_hit"):
+        return "end"
+    return "router"
 
 def route_guardrails(state: AgentState) -> Literal["router", "end"]:
     """
@@ -49,9 +74,9 @@ def decide_to_generate(state: AgentState) -> Literal["generate", "rewrite_query"
         state (AgentState): The current graph state.
 
     Returns:
+    Returns:
         Literal["generate", "rewrite_query"]: Next node decision.
     """
-    # print("---ASSESS GRADED DOCUMENTS---")
     filtered_documents = state.get("documents", [])
 
     if not filtered_documents:
@@ -65,7 +90,6 @@ def decide_to_generate(state: AgentState) -> Literal["generate", "rewrite_query"
         return "rewrite_query"
     else:
         # We have relevant documents, so generate answer
-        # print("---DECISION: GENERATE---")
         return "generate"
 
 def build_graph() -> Any:
@@ -92,8 +116,19 @@ def build_graph() -> Any:
         "input_guardrails",
         route_guardrails,
         {
-            "router": "router",
+            "router": "check_cache",
             "end": END
+        }
+    )
+
+    workflow.add_node("check_cache", check_cache)
+    
+    workflow.add_conditional_edges(
+        "check_cache",
+        route_cache,
+        {
+            "end": END,
+            "router": "router"
         }
     )
     

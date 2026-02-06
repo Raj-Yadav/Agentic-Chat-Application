@@ -145,12 +145,17 @@ def scrape_site(urls: List[str], max_depth: int = 1) -> List[Document]:
     if not urls:
         return []
         
-    # Heuristic: Use the first URL to determine base intent
-    base_url = urls[0]
-    crawler = SynergisticCrawler(base_url, EXCLUDE_KEYWORDS)
+    all_docs = []
+    
+    # Instantiate crawler for each unique base domain, or just once if we assume single domain.
+    # Given config.py, they are all *synergisticit.com*.
+    # We will instantiate input-specific crawlers to allow flexibility.
     
     for url in urls:
+        # Determine base domain for this specific URL execution context
+        crawler = SynergisticCrawler(base_url=url, exclude_patterns=EXCLUDE_KEYWORDS)
         crawler.crawl(url, max_depth=max_depth)
+        all_docs.extend(crawler.documents)
             
-    print(f"Total documents scraped: {len(crawler.documents)}")
-    return crawler.documents
+    print(f"Total documents scraped: {len(all_docs)}")
+    return all_docs

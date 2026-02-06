@@ -59,4 +59,10 @@ def generate(state: AgentState) -> Dict[str, Any]:
         print(f"Error generation: {e}")
         generation = "I approached a technical issue and could not generate an answer."
 
+    # Write to cache (Phase 15)
+    from src.utils.cache import cache
+    if generation and "I don't have verified information" not in generation:
+        cache.set(question, generation)
+        print(f"---CACHE UPDATE: Saved answer for '{question}'---")
+
     return {"generation": generation}

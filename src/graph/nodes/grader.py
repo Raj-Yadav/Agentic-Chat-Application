@@ -60,11 +60,9 @@ def grade_documents(state: AgentState) -> Dict[str, Any]:
             grade = score.binary_score
             
             if grade == "yes":
-                # print(f"  [ALLOWED] ({score.explanation}) Content: {d.page_content[:50]}...")
                 filtered_docs.append(d)
                 yes_count += 1
             else:
-                # print(f"  [FILTERED] ({score.explanation}) Content: {d.page_content[:50]}...")
                 # Log what it thought was missing
                 pass
         except Exception as e:
