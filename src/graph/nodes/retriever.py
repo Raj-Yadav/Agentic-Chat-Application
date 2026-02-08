@@ -10,6 +10,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 from src.config import CHROMA_DB_DIR, OPENAI_API_KEY
 from sentence_transformers import CrossEncoder
+from langsmith import traceable
 
 # Global reranker initialization (lazy load)
 _RERANKER: Optional[CrossEncoder] = None
@@ -24,6 +25,7 @@ def get_reranker() -> CrossEncoder:
         _RERANKER = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
     return _RERANKER
 
+@traceable
 def retrieve(state: AgentState) -> Dict[str, Any]:
     """
     Retrieve documents from targeted collections and rerank them using CrossEncoder.

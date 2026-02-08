@@ -9,6 +9,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from src.graph.state import AgentState
 from src.config import OPENAI_API_KEY
+from langsmith import traceable
 
 class RouteQuery(BaseModel):
     """Route a user query to the most relevant datasource and classify intent."""
@@ -21,6 +22,7 @@ class RouteQuery(BaseModel):
         description="Choose 'vector_store' for specific questions about the program/company, or 'general_chat' for greeting/off-topic.",
     )
 
+@traceable
 def route_question(state: AgentState) -> Dict[str, Any]:
     """
     Route question to web search or vectorstore.
@@ -36,18 +38,22 @@ def route_question(state: AgentState) -> Dict[str, Any]:
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=OPENAI_API_KEY)
     structured_llm_router = llm.with_structured_output(RouteQuery)
     
-    system = """You are an expert at routing user questions about SynergisticIT.
-    Classify the intent into one of 6 categories:
-    1. financing: ISA, tuition, loans, repayment, salary threshold, deposit.
-    2. placement: Job guarantee, success rate, companies, visa support (H1B/OPT), average salary.
-    3. curriculum: Technologies (Java, Python, AWS), projects, coding, skills.
-    4. logistics: Schedule, duration, remote vs onsite, start dates.
-    5. credibility: Reviews, scam allegations, real office, alumni, legitimacy.
-    6. general: Greetings, "how are you", or off-topic questions not about the program.
+    system = """Classify SynergisticIT user intent & datasource.
 
-    Also choose the datasource:
-    - vector_store: for financing, placement, curriculum, logistics, credibility.
-    - general_chat: only for 'general' intent if it's just a greeting or unrelated topic.
+    1. Analyze input.
+    2. Select Category & Datasource.
+
+    **Categories**:
+    - **financing**: ISA, tuition, loans, repayment, deposit, refunds.
+    - **placement**: Job guarantee, success rate, hiring partners, visa (H1B/OPT), salary.
+    - **curriculum**: Technologies (Java, Python, AWS, AI), projects, skills, syllabus.
+    - **logistics**: Schedule, duration, start dates, remote/onsite.
+    - **credibility**: Legitimacy, reviews, scams, alumni, locations.
+    - **general**: Greetings, off-topic.
+
+    **Sources**:
+    - `vector_store`: financing, placement, curriculum, logistics, credibility.
+    - `general_chat`: general ONLY.
     """
     
     route_prompt = ChatPromptTemplate.from_messages(

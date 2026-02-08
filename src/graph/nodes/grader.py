@@ -10,6 +10,7 @@ from langchain_core.documents import Document
 from pydantic import BaseModel, Field
 from src.graph.state import AgentState
 from src.config import OPENAI_API_KEY
+from langsmith import traceable
 
 class GradeDocuments(BaseModel):
     """Binary score for relevance check on retrieved documents."""
@@ -20,6 +21,7 @@ class GradeDocuments(BaseModel):
         description="Brief explanation of why the document is relevant or not"
     )
 
+@traceable
 def grade_documents(state: AgentState) -> Dict[str, Any]:
     """
     Determines whether the retrieved documents are relevant to the question.
@@ -37,9 +39,13 @@ def grade_documents(state: AgentState) -> Dict[str, Any]:
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=OPENAI_API_KEY)
     structured_llm_grader = llm.with_structured_output(GradeDocuments)
     
-    system = """You are a grader assessing relevance of a retrieved document to a user question. \n 
-    If the document contains keyword(s) or semantic meaning related to the question, grade it as relevant. \n
-    Provide a brief explanation for your decision, then give a binary score 'yes' or 'no'."""
+    system = """Grade relevance of document to question.
+
+    **Rules**:
+    1. Check if document contains *evidence* for the question.
+    2. relevant ('yes'): Quote specific supporting sentence(s).
+    3. irrelevant ('no'): Explain why (e.g., "Topic mismatch").
+    """
     
     grade_prompt = ChatPromptTemplate.from_messages(
         [

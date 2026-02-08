@@ -9,7 +9,9 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from src.graph.state import AgentState
 from src.config import OPENAI_API_KEY
+from langsmith import traceable
 
+@traceable
 def rewrite_query(state: AgentState) -> Dict[str, Any]:
     """
     Transform the query to produce a better question.
@@ -26,26 +28,24 @@ def rewrite_query(state: AgentState) -> Dict[str, Any]:
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=OPENAI_API_KEY)
     
     msg = [
-        ("system", """You are a domain-expert question re-writer for SynergisticIT (a career acceleration program). 
-    Your goal is to convert vague or short user input into a specific, semantic question optimized for vector search.
+        ("system", """Rewrite user input into specific semantic questions for vector search.
 
-    **Domain Context**:
-    - "ISA" -> Income Share Agreement (financial contract).
-    - "JOPP" -> Job Placement Program.
-    - "Java" -> Java Full Stack Track.
-    - "Python" -> Data Science / Machine Learning Track.
-    - "Money back" -> Refund policy / Deposit refund.
-    - "Fake/Scam" -> Legitimacy / Trustworthiness / Reviews.
-    - "Cost/Fee" -> Tuition profile / Payment options.
-
+    **Context**:
+    - ISA -> Income Share Agreement.
+    - JOPP -> Job Placement.
+    - Money back -> Refund/Deposit.
+    - Fake/Scam -> Legitimacy/Reviews.
+    
     **Examples**:
-    - Input: "cost?" -> Output: "What is the tuition cost and fee structure for the program?"
-    - Input: "java tools" -> Output: "What specific technologies and tools are covered in the Java Full Stack curriculum?"
-    - Input: "fake?" -> Output: "Is SynergisticIT a legitimate company or a scam? show me reviews."
-    - Input: "money back?" -> Output: "What is the refund policy for the security deposit?"
+    - "cost?" -> "What is the tuition cost and fee structure?"
+    - "java tools" -> "What technologies are covered in Java Full Stack?"
+    - "fake?" -> "Is SynergisticIT legitimate? Show reviews."
+    - "money back?" -> "What is the refund policy for the deposit?"
+    - "how long and price" -> "What is the duration and tuition cost?"
 
-    Return ONLY the rewritten question string. Do not add any preamble."""),
-        ("human", f"Here is the initial question: \n\n {question} \n Formulate an improved question."),
+    Return ONLY the rewritten question. No preamble.
+    """),
+        ("human", f"Question: {question}"),
     ]
     
     grader_llm = llm | StrOutputParser()

@@ -11,7 +11,6 @@ from src.graph.nodes.retriever import retrieve
 from src.graph.nodes.grader import grade_documents
 from src.graph.nodes.generator import generate
 from src.graph.nodes.query_rewriter import rewrite_query
-from src.graph.nodes.query_rewriter import rewrite_query
 from src.graph.nodes.input_guardrails import input_guardrails
 from src.utils.cache import cache
 
@@ -73,7 +72,6 @@ def decide_to_generate(state: AgentState) -> Literal["generate", "rewrite_query"
     Args:
         state (AgentState): The current graph state.
 
-    Returns:
     Returns:
         Literal["generate", "rewrite_query"]: Next node decision.
     """

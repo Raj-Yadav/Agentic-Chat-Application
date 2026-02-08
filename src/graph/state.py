@@ -1,4 +1,4 @@
-from typing import List, TypedDict, Optional
+from typing import List, TypedDict, Optional, Any
 
 class AgentState(TypedDict):
     """
@@ -16,13 +16,12 @@ class AgentState(TypedDict):
         datasource (str): The routing destination ('vector_store' or 'general_chat').
     """
     question: str
-    documents: List[str] 
+    documents: List[Any] 
     generation: str
     guardrail_status: str
     relevance_score: str
     loop_step: int
     intent: str
-    target_collections: List[str]
     target_collections: List[str]
     datasource: str
     cache_hit: bool

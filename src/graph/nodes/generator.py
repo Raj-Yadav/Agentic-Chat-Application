@@ -9,7 +9,9 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from src.graph.state import AgentState
 from src.config import OPENAI_API_KEY
+from langsmith import traceable
 
+@traceable
 def generate(state: AgentState) -> Dict[str, Any]:
     """
     Generate answer using only retrieved context.
@@ -32,16 +34,13 @@ def generate(state: AgentState) -> Dict[str, Any]:
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=OPENAI_API_KEY)
     
     # Phase 5: System Prompt Redesign & Policy Override
-    system = """You are a specialized assistant for SynergisticIT. 
-    You must ONLY use the provided context to answer the user's question.
-    
-    STRICT RULES:
-    1. Answer strictly using the retrieved knowledge below.
-    2. If partial information exists: provide the known portion and clearly state what is not confirmed.
-    3. If the context is empty or irrelevant to the specific question, you MUST state: "I don't have verified information about that yet."
-    4. **Policy Override**: If the context includes a section marked as 'Policy', it takes precedence over any other information (marketing, reviews, etc.).
-    5. Do NOT use outside knowledge. Do NOT hallucinate.
-    6. Keep the answer concise and professional.
+    system = """Answer SynergisticIT questions using Context ONLY.
+
+    **Rules**:
+    1. **No Outside Knowledge**: Use strictly retrieved docs. No hallucinations.
+    2. **Policy Priority**: "Policy"/"Refund" sections OVERRIDE other info. Quote terms.
+    3. **Uncertainty**: If context missing/insufficient, state: "I don't have verified information about that based on the available documents."
+    4. **Tone**: Professional, welcoming, concise. No fluff.
     """
     
     prompt = ChatPromptTemplate.from_messages(
